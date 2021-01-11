@@ -7,7 +7,7 @@ clean:
 
 .PHONY: build
 build: clean
-	go build -o build/protoc-gen-schema
+	go build -o build/protoc-gen-tfschema
 
 .PHONY: install
 install: build

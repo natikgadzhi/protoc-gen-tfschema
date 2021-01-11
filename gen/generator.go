@@ -7,60 +7,163 @@ import (
 	"github.com/gravitational/trace"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-type schemaGenerator struct {
-	Plugin *protogen.Plugin
+// Generator is the Terraform Schema generator
+type Generator struct {
+	Plugin  *protogen.Plugin
+	options *GeneratorOptions
+}
+
+// GeneratorOptions holds all of the options for the terraform schema generator that are parsed from the command line flags
+type GeneratorOptions struct {
+	// Types is a list of type names in the proto to generate terraform schemas for.
+	types []string
 }
 
 // NewGenerator returns new generator instance.
-func NewGenerator(plugin *protogen.Plugin) *schemaGenerator {
-	return &schemaGenerator{
-		Plugin: plugin,
+func NewGenerator(plugin *protogen.Plugin) *Generator {
+	g := &Generator{Plugin: plugin}
+	g.options = ParseCommandLineOptions(g.Plugin.Request.GetParameter())
+	return g
+}
+
+// ParseCommandLineOptions parses params passed from protoc and returns a GeneratorOptions struct
+func ParseCommandLineOptions(params string) *GeneratorOptions {
+	// make a map of options and flags
+	opts := map[string]string{}
+	for _, p := range strings.Split(params, ",") {
+		if i := strings.Index(p, "="); i < 0 {
+			opts[p] = ""
+		} else {
+			opts[p[0:i]] = p[i+1:]
+		}
+	}
+
+	var generateMessages []string
+	if types, ok := opts["types"]; ok {
+		generateMessages = strings.Split(types, " ")
+	}
+
+	return &GeneratorOptions{
+		types: generateMessages,
 	}
 }
 
-// Generate takes a list of protogen targets (proto files), and
-// generates files with Go code implementing terraform schema for
-// resources provided in the proto files.
-func (g *schemaGenerator) Generate() ([]*protogen.GeneratedFile, error) {
+// Generate is an entry point for the generator.
+// main() invokes Generate after initializing the plugin and expects it to
+// return a bunch of generated files and errors.
+//
+// The errors will be rendered to STDERR, and should be runtime / execution errors.
+// Proto-specific and generation errors should be reported in g.Plugin.Error,
+// that way protoc will intercept them. main() handles grabbing those errors from
+// g.PLugin.
+//
+// Generate() builds the map of all of the available messages first, and then
+// generates schemas for required messages.
+func (g *Generator) Generate() ([]*protogen.GeneratedFile, error) {
 	var files []*protogen.GeneratedFile
 
-	for _, file := range g.Plugin.Files {
+	// Put all available proto types into a map
+	// messages := g.buildMessagesMap()
 
+	for _, file := range g.Plugin.Files {
+		if !file.Generate {
+			continue
+		}
+
+		// generate the tfschema source based on proto
 		generated, err := g.generateFile(file)
 		if err != nil {
 			return files, trace.Wrap(err)
 		}
 
-		// TODO move filename suffix to a const
-		filename := file.GeneratedFilenamePrefix + ".schema.go"
-		file := g.Plugin.NewGeneratedFile(filename, ".")
-		_, err = file.Write([]byte(generated))
+		// generate the file name and write the file
+		filename := file.GeneratedFilenamePrefix + ".tfschema.go"
+		out := g.Plugin.NewGeneratedFile(filename, ".")
+		_, err = out.Write([]byte(generated))
 		if err != nil {
+			log.Errorf("Couldn't write %s, error: %v", filename, err)
 			return files, trace.Wrap(err)
 		}
 
-		files = append(files, file)
+		files = append(files, out)
 		log.Infof("Will emit %s", filename)
 	}
 
 	return files, nil
 }
 
-// generateFile generates go code implementing Terraform schema for
-// resources provided in a single proto file
-func (g *schemaGenerator) generateFile(file *protogen.File) (string, error) {
-	generated := []string{}
+// buildMessagesMap goes over all provided proto files and maps all available message types into a map
+func (g *Generator) buildMessagesMap() map[string]*descriptorpb.DescriptorProto {
+	messages := map[string]*descriptorpb.DescriptorProto{}
 
-	generated = append(generated, fmt.Sprintf(`package %s`, file.GoPackageName))
-
-	for _, msg := range file.Proto.MessageType {
-		generated = append(generated, fmt.Sprintf(`
-		func (x %s) Foo() string {
-			return "bar"
-		}`, *msg.Name))
+	for _, file := range g.Plugin.Files {
+		for _, message := range file.Proto.MessageType {
+			name := fmt.Sprintf("%s.%s", file.GoPackageName, message.GetName())
+			log.Debugf("Mapping a new type: %s", name)
+			messages[name] = message
+		}
 	}
 
-	return strings.Join(generated, "\n"), nil
+	return messages
+}
+
+// generateFile generates go code implementing Terraform schema for
+// resources provided in a single proto file
+func (g *Generator) generateFile(file *protogen.File) (string, error) {
+
+	data := &SchemaData{
+		PackageName: string(file.GoPackageName),
+		Messages:    []MessageData{},
+	}
+
+	// go over types (messages) and generate specified messages
+	for _, message := range file.Proto.MessageType {
+		if !g.isMessageRequired(message) {
+			continue
+		}
+
+		// go over message fields and prepare data for the template
+		fields := []FieldData{}
+		descriptors := message.ProtoReflect().Descriptor().Fields()
+
+		for i := 0; i < descriptors.Len(); i++ {
+			desc := descriptors.Get(i)
+
+			fieldData := FieldData{
+				Name:     string(desc.Name()),
+				Type:     kindToTerraform(desc.Kind()),
+				Required: true,
+			}
+			fields = append(fields, fieldData)
+		}
+
+		data.Messages = append(data.Messages, MessageData{
+			Name:   *message.Name,
+			Fields: fields,
+		})
+	}
+
+	return schemaTemplate(data)
+}
+
+// isMessageRequired returns true for Proto Type names if they're required
+// to be generated by the protoc command line options.
+//
+// `tfschema_opt=types=Metadata` will set Metadata message to be required.
+// If no option was provided, all messages are required.
+func (g *Generator) isMessageRequired(message *descriptorpb.DescriptorProto) bool {
+	if len(g.options.types) == 0 {
+		return true
+	}
+
+	for _, t := range g.options.types {
+		if t == *message.Name {
+			return true
+		}
+	}
+
+	return false
 }
