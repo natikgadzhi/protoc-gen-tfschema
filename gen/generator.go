@@ -143,6 +143,21 @@ func (g *Generator) generateFile(file *protogen.File) (string, error) {
 	return generated, nil
 }
 
+func (g *Generator) generateInlineMessageSchema(message protoreflect.MessageDescriptor) string {
+
+	fields := []string{}
+	for _, field := range g.fieldsToList(message.Fields()) {
+		fields = append(fields, g.generateFieldSchema(field))
+	}
+
+	return fmt.Sprintf(`&schema.Resource{
+		// nested type name: %s
+		Schema: map[string]*schema.Schema{
+			%s
+		},
+	}`, message.FullName(), strings.Join(fields, ""))
+}
+
 // generateMessage generates a terraform schema go code for one MessageDescriptor (type)
 // and all of it's internals and nested types.
 func (g *Generator) generateMessageSchema(message protoreflect.MessageDescriptor) string {
@@ -156,12 +171,13 @@ func (g *Generator) generateMessageSchema(message protoreflect.MessageDescriptor
 	}
 
 	return fmt.Sprintf(`
+	// proto type fullname: %s
 	func schema%s() map[string]*schema.Schema {
 		return map[string]*schema.Schema{
 			%s
 		}
 	}
-	`, message.Name(), strings.Join(fields, ""))
+	`, message.FullName(), message.Name(), strings.Join(fields, ""))
 }
 
 // generateFieldSchema generates a schema for a single field in a proto message
@@ -172,11 +188,33 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 	}
 
 	if field.IsList() {
+		// List of complex type objects
+		if field.Kind() == protoreflect.MessageKind {
+			return fmt.Sprintf(`"%s": {
+				Type: schema.TypeList,
+				%s,
+				Elem: &schema.Schema{Type: schema.%s},
+			},
+			`, field.Name(), requiredOrOptional(field.HasOptionalKeyword()), kindToTerraform(field.Kind()))
+		}
 
+		// List of primitive type objects
+		return fmt.Sprintf(`"%s": {
+			Type: schema.TypeList,
+			%s,
+			Elem: &schema.Schema{Type: schema.%s},
+		},
+		`, field.Name(), requiredOrOptional(field.HasOptionalKeyword()), kindToTerraform(field.Kind()))
 	}
 
 	if field.Kind() == protoreflect.MessageKind {
-
+		return fmt.Sprintf(`"%s": {
+			Type: schema.TypeList,
+			%s,
+			MaxItems:1,
+			Elem: %s,
+		},
+		`, field.Name(), requiredOrOptional(field.HasOptionalKeyword()), g.generateInlineMessageSchema(field.Message()))
 	}
 
 	return fmt.Sprintf(`"%s": {
@@ -273,9 +311,9 @@ func kindToTerraform(kind protoreflect.Kind) string {
 	return fmt.Sprintf("%v", kind)
 }
 
-func requiredOrOptional(required bool) string {
-	if required {
-		return "Required: true"
+func requiredOrOptional(optional bool) string {
+	if optional {
+		return "Optional: true"
 	}
-	return "Optional: true"
+	return "Required: true"
 }
