@@ -1,70 +1,63 @@
-# protoc-gen-schema
+# protoc-gen-tfschema
 
-Generates Terraform Resource Schemas from proto. Heads up, this is an
-implementation note, not a public-release-ready readme.
+protoc-gen-tfschema is a protoc plugin that generates Terraform-compatible
+schemas that you can use to build your own Terraform providers for a service
+that already has a GRPC API and defines it's with Protobuf.
+
+protoc-gen-schema is in active development. Your contributions are very welcome.
+Maybe don't use it in production yet, as the schema output format may change.
 
 ## Usage
 
+You'd need several components to build a Terraform provider:
+
+- your API client and settings to authenticate it
+- resource schema definitions
+- funcitons to create, update, delete, and read the data from your API
+- as a part of those funcitons, marshalling and unmarshalling data between
+  terraform and your API formats.
+
+If your target app provides `.proto` description of it's API data types, you can
+use `protoc-gen-tfschema` to generate the resource definitions and
+marshalling/unmarshalling components automatically.
+
+You'll still need to provide an API client initialization code, and call the API
+to execute CRUD features.
+
+Here's how to generate resource schemas:
+
 ```bash
 
-go install github.com/nategadzhi/protoc-gen-schema
+go install github.com/nategadzhi/protoc-gen-tfschema
 
 protoc --proto_path ./proto/teleport --proto_path=. --proto_path=/Users/xnutsive/go/src/github.com/gravitational/teleport/vendor/github.com/gogo/protobuf --proto_path=/Users/xnutsive/go/src types.proto --tfschema_out=./out/teleport --go_out=./out/teleport --tfschema_opt="types=Metadata UserSpecV2 UserV2"
 
 ```
 
-## Working with complex field types
+### Command line options
 
-When rendering a schema, fields can be represented in several different ways:
+`--tfschema_opt=` accepts several options:
 
-1. A field can be of a basic type (Bool, String, Int). In that case, the plugin
-   should convert the field to it's basic type counterpart in terraform. Lookup
-   available Terraform types to do that.
-2. A field can be a list or set of a primitive type. Then the schema will look a
-   bit different, but the basic premise is the same, convert primitive type to
-   Terraform notation, and wrap it with the Terraform notation of a list.
-3. A field can be of a complex custom type. Then we should have a map of said
-   types in memory and we should generate an in-place Terraform resource for
-   that type.
+- `types` defines what Protobuf Messages (types) to generate resource schemas
+  for.
+- `package` defines what package name to use for the resulting files. Defaults
+  to `tfschema`.
 
-### Plugin Workflow
+## Features
 
-Assuming plugin is initialized and we have all of the options provided, here's
-how the plugin should run and generate type schemas.
+- **Resource Schemas**: generate schemas for your resources with a single CLI
+  command.
+- **Unmarshalling from Terraform data**: generates functions that unmarshall
+  data form Terraform to Go types generated from the Protobuf messages.
 
-1. protoc API provides all the files in a loop. The generator reads the files
-   and saves all the messages into a set. The messages are in a standard protoc
-   format.
+### Things that are NOT supported yet
 
-2. For each message, generator checks if that message is required to be
-   generated.
+- The plugin can't generate `Computed` flag for schema fields. There's no way to
+  know that the field is computed from the proto.
 
-3. For required messages, generator tries to generate the message schema
-   function without all the wraparound code at this point.
+### Next steps
 
-4. The template goes over message fields. Pritimitive fields can be simply
-   rendered, whereas a message_type fields need to be generated as a partial or
-   a function that calls another template.
-
-5. That message_type partial takes in the message name and message spec from the
-   map of messages, and resolves it's fields recursively.
-
-   The only difference is that it generates a schema.Resource with a
-   schema.Schema inside istead of just the schema.Schema. So the internal logic
-   can be extracted into a helper function.
-
-6. If some message_type can't be resolved (is not in all of the provided proto
-   files) — error out.
-
-Some intermidiate steps that can be implemented:
-
-1. Generate just the primitive types
-2. Add lists, sets, and maps of primitive types
-
-3. Implement recursive message_type
-4. Implement lists, sets, and maps of message_types
-
-## Additional work on fields
-
-- [ ] Is there a way to set fields as computed, or leave it out for now?
-- [ ] Is there a way to setup default values?
+- [ ] An example project to test the generated schemas
+- [ ] Provide unmarshalling generators
+- [ ] Provide terraform data source schema generators
+- [ ] Provide terraform schema importers, versions, and updaters

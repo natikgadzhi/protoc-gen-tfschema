@@ -16,19 +16,21 @@ const (
 	defaultPackageName = "tfschema"
 )
 
+// kind2tf is a mapping from protobuf primitive types to terraform types
 var kind2tf = map[protoreflect.Kind]string{
-	protoreflect.BoolKind:   "TypeBool",
+	protoreflect.BoolKind: "TypeBool",
+
 	protoreflect.StringKind: "TypeString",
 	protoreflect.BytesKind:  "TypeString",
 	protoreflect.EnumKind:   "TypeString",
 
 	protoreflect.Int32Kind:   "TypeInt",
 	protoreflect.Int64Kind:   "TypeInt",
-	protoreflect.DoubleKind:  "TypeFloat",
 	protoreflect.Fixed32Kind: "TypeInt",
 	protoreflect.Fixed64Kind: "TypeInt",
 	protoreflect.Uint32Kind:  "TypeInt",
 	protoreflect.Uint64Kind:  "TypeInt",
+	protoreflect.DoubleKind:  "TypeFloat",
 }
 
 // Generator is the Terraform Schema generator
@@ -143,6 +145,10 @@ func (g *Generator) generateFile(file *protogen.File) (string, error) {
 	return generated, nil
 }
 
+// TODO: Generator functions are using a bunch of `fmt.Sprintf` and that doesn't look nice.
+// Refactor this into templates?
+
+// generateInlineMessageSchema renders a schema for a complex type field inline in a message schema
 func (g *Generator) generateInlineMessageSchema(message protoreflect.MessageDescriptor) string {
 
 	fields := []string{}
@@ -181,10 +187,31 @@ func (g *Generator) generateMessageSchema(message protoreflect.MessageDescriptor
 }
 
 // generateFieldSchema generates a schema for a single field in a proto message
+// TODO: refactor this to use switch, and maybe extract into several functions.
 func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) string {
 
 	if field.IsMap() {
+		// map with string keys and primitive type values
+		if field.MapValue().Kind() != protoreflect.MessageKind {
+			return fmt.Sprintf(`"%s": {
+				Type: schema.TypeMap,
+				%s,
+				Elem: &schema.Schema{
+					Type: schema.%s,
+				},
+			},
+			`, field.Name(), requiredOrOptional(field), kindToTerraform(field.MapValue().Kind()))
+		}
 
+		// map with string keys and complex type values
+		if field.MapValue().Kind() != protoreflect.MessageKind {
+			return fmt.Sprintf(`"%s": {
+				Type: schema.TypeMap,
+				%s,
+				Elem: %s
+			},
+			`, field.Name(), requiredOrOptional(field), g.generateInlineMessageSchema(field.MapValue().Message()))
+		}
 	}
 
 	if field.IsList() {
@@ -193,9 +220,9 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 			return fmt.Sprintf(`"%s": {
 				Type: schema.TypeList,
 				%s,
-				Elem: &schema.Schema{Type: schema.%s},
+				Elem: %s,
 			},
-			`, field.Name(), requiredOrOptional(field.HasOptionalKeyword()), kindToTerraform(field.Kind()))
+			`, field.Name(), requiredOrOptional(field), g.generateInlineMessageSchema(field.Message()))
 		}
 
 		// List of primitive type objects
@@ -204,24 +231,41 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 			%s,
 			Elem: &schema.Schema{Type: schema.%s},
 		},
-		`, field.Name(), requiredOrOptional(field.HasOptionalKeyword()), kindToTerraform(field.Kind()))
+		`, field.Name(), requiredOrOptional(field), kindToTerraform(field.Kind()))
 	}
 
 	if field.Kind() == protoreflect.MessageKind {
-		return fmt.Sprintf(`"%s": {
-			Type: schema.TypeList,
-			%s,
-			MaxItems:1,
-			Elem: %s,
-		},
-		`, field.Name(), requiredOrOptional(field.HasOptionalKeyword()), g.generateInlineMessageSchema(field.Message()))
+
+		// check if the field has one of a known mappable types
+		// and generate an inline schema for types we don't recognize
+		switch field.Message().FullName() {
+		case "google.protobuf.Timestamp":
+			return fmt.Sprintf(`"%s": {
+				Type: schema.TypeString,
+				%s,
+				ValidateFunc: validation.ValidateRFC3339TimeString,
+			},
+			`, field.Name(), requiredOrOptional(field))
+		default:
+
+			// fields of custom time are represented as lists in TF schema
+			return fmt.Sprintf(`"%s": {
+				Type: schema.TypeList,
+				%s,
+				MaxItems:1,
+				Elem: %s,
+				},
+			`, field.Name(), requiredOrOptional(field), g.generateInlineMessageSchema(field.Message()))
+		}
+
 	}
 
 	return fmt.Sprintf(`"%s": {
 		Type: schema.%s,
 		%s,
 	},
-	`, field.Name(), kindToTerraform(field.Kind()), requiredOrOptional(field.HasOptionalKeyword()))
+	`, field.Name(), kindToTerraform(field.Kind()), requiredOrOptional(field))
+
 }
 
 // generatePackageName generates package name string
@@ -232,6 +276,7 @@ func (g *Generator) generatePackageName() string {
 
 	import (
 		"github.com/hashicorp/terraform/helper/schema"
+		"github.com/hashicorp/terraform/helper/validation"
 	)
 
 	`, g.options.packageName)
@@ -298,6 +343,7 @@ func (g *Generator) isMessageRequired(message protoreflect.MessageDescriptor) bo
 }
 
 // helpers
+// TODO: extract helpers into a separate file
 //
 
 // kindToTerraform returns terraform schema equivalent
@@ -311,9 +357,9 @@ func kindToTerraform(kind protoreflect.Kind) string {
 	return fmt.Sprintf("%v", kind)
 }
 
-func requiredOrOptional(optional bool) string {
-	if optional {
-		return "Optional: true"
+func requiredOrOptional(field protoreflect.FieldDescriptor) string {
+	if field.Cardinality() == protoreflect.Required {
+		return "Required: true"
 	}
-	return "Required: true"
+	return "Optional: true"
 }
