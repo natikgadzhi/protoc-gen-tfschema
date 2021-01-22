@@ -178,7 +178,7 @@ func (g *Generator) generateMessageSchema(message protoreflect.MessageDescriptor
 
 	return fmt.Sprintf(`
 	// proto type fullname: %s
-	func schema%s() map[string]*schema.Schema {
+	func Schema%s() map[string]*schema.Schema {
 		return map[string]*schema.Schema{
 			%s
 		}
@@ -243,7 +243,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 			return fmt.Sprintf(`"%s": {
 				Type: schema.TypeString,
 				%s,
-				ValidateFunc: validation.ValidateRFC3339TimeString,
+				ValidateFunc: validation.IsRFC3339Time,
 			},
 			`, field.Name(), requiredOrOptional(field))
 		default:
@@ -287,7 +287,7 @@ func (g *Generator) generatePackageName(file *protogen.File) string {
 
 	import (
 		"github.com/hashicorp/terraform/helper/schema"
-		"github.com/hashicorp/terraform/helper/validation"
+		"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	)
 
 	`, Version, protocVersion, file.Desc.Path(), g.options.packageName)
