@@ -6,11 +6,9 @@ require (
 	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38 // indirect
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/alecthomas/repr v0.0.0-20201120212035-bb82daffcca2 // indirect
-	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gravitational/configure v0.0.0-20180808141939-c3428bd84c23 // indirect
 	github.com/gravitational/kingpin v2.1.10+incompatible // indirect
-	github.com/gravitational/trace v1.1.12
+	github.com/gravitational/trace v1.1.13
 	github.com/hashicorp/terraform v0.14.4 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect

@@ -235,6 +235,8 @@ github.com/gravitational/teleport v4.3.9+incompatible h1:FVZuDj7upbiPam9xI4bSBAv
 github.com/gravitational/teleport v4.3.9+incompatible/go.mod h1:m0eatGeHK6TR5mlAkfvQQS+XAVyVOgeRUP+2Z4VksIY=
 github.com/gravitational/trace v1.1.12 h1:xSOH8YJTy5AuQy4E7m/j6pTRm41cnufrnFCJfGIR80E=
 github.com/gravitational/trace v1.1.12/go.mod h1:RvdOUHE4SHqR3oXlFFKnGzms8a5dugHygGw1bqDstYI=
+github.com/gravitational/trace v1.1.13 h1:4vSuBtVQCbUGj28dm5ke8UPnuejcxeSlz9GEW9X7HIM=
+github.com/gravitational/trace v1.1.13/go.mod h1:RvdOUHE4SHqR3oXlFFKnGzms8a5dugHygGw1bqDstYI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
 github.com/grpc-ecosystem/grpc-gateway v1.8.5/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
