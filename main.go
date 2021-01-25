@@ -14,59 +14,45 @@ import (
 	"github.com/nategadzhi/protoc-gen-tfschema/gen"
 )
 
-// protoc invokes main and provides cli params.
-// main creates a new instance of the Plugin,
-// runs the generator, and sends the result back
-// to stdout for protoc.
+var request = pluginpb.CodeGeneratorRequest{}
+
 func main() {
+	// 1. Read request from stdin
 	log.Info("Reading CodeGeneratorRequest from stdin.")
-	request, err := readRequest()
+	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
+	proto.Unmarshal(input, &request)
 
-	log.Info("Initializing protoc-gen-schema plugin.")
+	// 2. Initialize plugin
+	log.Info("Initializing protoc-gen-tfschema plugin.")
 	opts := protogen.Options{}
-	plugin, err := opts.New(request)
+	plugin, err := opts.New(&request)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
-	generator := gen.NewGenerator(plugin)
 
+	// 3. Run plugin, generate schema files
 	log.Info("Generating schema files.")
+	generator := gen.NewGenerator(plugin)
 	generated, err := generator.Generate()
 	if err != nil {
 		log.Errorf("Error generating schemas: %v", err)
 		generator.Plugin.Error(err)
 	}
-
 	log.Infof("Done, generated %d files", len(generated))
 
-	emitResponse(generator.Plugin.Response())
-}
-
-// readRequest reads the protoc-gen Code Generator request
-// with a list of proto files to work through, and
-// unmarshalls it from proto format.
-func readRequest() (*pluginpb.CodeGeneratorRequest, error) {
-	var request pluginpb.CodeGeneratorRequest
-	input, err := ioutil.ReadAll(os.Stdin)
+	// 4. Put response back to stdout
+	buf, err := proto.Marshal(generator.Plugin.Response())
 	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-
-	proto.Unmarshal(input, &request)
-	return &request, nil
-}
-
-// emitResponse marshalls the response to a protobuf message
-// and sends it back to protoc-gen via stdout
-func emitResponse(resp *pluginpb.CodeGeneratorResponse) {
-	buf, err := proto.Marshal(resp)
-	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 	if _, err := os.Stdout.Write(buf); err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
+}
+
+func fatal(err error) {
+	log.Fatal(trace.Wrap(err).Error())
 }

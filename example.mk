@@ -12,11 +12,11 @@ ifeq ("$(wildcard $(teleport_dir))", "")
 	@git clone $(teleport_repo) $(teleport_dir)
 endif
 	@echo "Teleport has been downloaded."
-	protoc \
+	@protoc \
 		-I$(teleport_dir)/api/types \
+		-I$(teleport_dir)/vendor/github.com/gogo/protobuf \
 		-I$(teleport_dir) \
 		-I$(srcpath) \
-		-I$(teleport_dir)/vendor/github.com/gogo/protobuf \
 		--tfschema_out=./out \
 		--go_out=./out \
 		--plugin=./build/protoc-gen-tfschema \
