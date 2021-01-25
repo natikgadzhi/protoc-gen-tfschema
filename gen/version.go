@@ -3,7 +3,7 @@
 package gen
 
 const (
-	Version = "0.0.1"
+	Version = "0.0.2"
 )
 
 // Gitref variable is automatically set to the output of git-describe

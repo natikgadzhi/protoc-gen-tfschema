@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// 3. Run plugin, generate schema files
-	log.Info("Generating schema files.")
+	log.Info("Generating schema files...")
 	generator := gen.NewGenerator(plugin)
 	generated, err := generator.Generate()
 	if err != nil {

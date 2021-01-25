@@ -10,12 +10,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-const (
-	// defaultPackageName is the default package name to generate
-	// if `package` option is not provided in the CLI options.
-	defaultPackageName = "tfschema"
-)
-
 // kind2tf is a mapping from protobuf primitive types to terraform types
 var kind2tf = map[protoreflect.Kind]string{
 	protoreflect.BoolKind: "TypeBool",
@@ -35,51 +29,26 @@ var kind2tf = map[protoreflect.Kind]string{
 
 // Generator is the Terraform Schema generator
 type Generator struct {
-	Plugin  *protogen.Plugin
-	options *GeneratorOptions
-}
-
-// GeneratorOptions holds all of the options for the terraform schema generator that are parsed from the command line flags
-type GeneratorOptions struct {
-	// Types is a list of type names in the proto to generate terraform schemas for.
-	types       []string
-	packageName string
+	Plugin        *protogen.Plugin // Plugin
+	packageName   string           // Package name
+	types         []string         // Types to export
+	protocVersion string           // protoc version
 }
 
 // NewGenerator returns new generator instance.
 func NewGenerator(plugin *protogen.Plugin) *Generator {
 	g := &Generator{Plugin: plugin}
-	log.Infof(g.Plugin.Request.GetParameter())
-	g.options = parseCommandLineOptions(g.Plugin.Request.GetParameter())
+
+	// TODO: Move to this file once it becomes shorter
+	g.parseArgs()
+	g.fillVersion()
+
+	log.Infof("Command line options: %s", g.Plugin.Request.GetParameter())
+	log.Infof("Package name: %s", g.packageName)
+	log.Infof("Types: %s", g.types)
+	log.Infof("Protoc version: %s", g.protocVersion)
+
 	return g
-}
-
-// parseCommandLineOptions parses params passed from protoc and returns a GeneratorOptions struct
-func parseCommandLineOptions(params string) *GeneratorOptions {
-	// make a map of options and flags
-	opts := map[string]string{}
-	for _, p := range strings.Split(params, ",") {
-		if i := strings.Index(p, "="); i < 0 {
-			opts[p] = ""
-		} else {
-			opts[p[0:i]] = p[i+1:]
-		}
-	}
-
-	var generateMessages []string
-	if types, ok := opts["types"]; ok {
-		generateMessages = strings.Split(types, " ")
-	}
-
-	packageName := opts["package"]
-	if packageName == "" {
-		packageName = defaultPackageName
-	}
-
-	return &GeneratorOptions{
-		types:       generateMessages,
-		packageName: packageName,
-	}
 }
 
 // Generate is an entry point for the generator.
@@ -101,19 +70,28 @@ func (g *Generator) Generate() ([]*protogen.GeneratedFile, error) {
 			continue
 		}
 
-		// generate the tfschema source based on the proto
-		generated, err := g.generateFile(file)
-		if err != nil {
-			// main wraps the call to Generate and puts emits errors to the protoc binary.
-			// if there's a runtime error not related to the generator itself, we log it to stdout.
-			// but if there'a generator error, we just return it.
-			return files, trace.Wrap(err)
+		fileGenerator := fileGenerator{
+			generator: g,
+			file:      file,
 		}
+
+		fileGenerator.generate()
+
+		// generate the tfschema source based on the proto
+		// generated, err := g.generateFile(file)
+		// if err != nil {
+		// 	// main wraps the call to Generate and puts emits errors to the protoc binary.
+		// 	// if there's a runtime error not related to the generator itself, we log it to stdout.
+		// 	// but if there'a generator error, we just return it.
+		// 	return files, trace.Wrap(err)
+		// }
 
 		// generate the file name and write the file
 		filename := file.GeneratedFilenamePrefix + ".tfschema.go"
 		out := g.Plugin.NewGeneratedFile(filename, ".")
-		_, err = out.Write([]byte(generated))
+
+		// _, err = out.Write([]byte(generated))
+		_, err := out.Write([]byte(fileGenerator.content.String()))
 		if err != nil {
 			log.Errorf("Couldn't write %s, error: %v", filename, err)
 			return files, trace.Wrap(err)
@@ -291,7 +269,7 @@ func (g *Generator) generatePackageName(file *protogen.File) string {
 		"github.com/hashicorp/terraform/helper/validation"
 	)
 
-	`, Version, protocVersion, file.Desc.Path(), g.options.packageName)
+	`, Version, protocVersion, file.Desc.Path(), g.packageName)
 }
 
 // filterRequiredMessages takes a MessageDescriptors, flattens it to a list and filters only the required messages.
@@ -300,7 +278,7 @@ func (g *Generator) generatePackageName(file *protogen.File) string {
 func (g *Generator) filterRequiredMessages(messages protoreflect.MessageDescriptors) []protoreflect.MessageDescriptor {
 
 	messagesList := g.messagesToList(messages)
-	if len(g.options.types) == 0 {
+	if len(g.types) == 0 {
 		return messagesList
 	}
 
@@ -341,12 +319,12 @@ func (g *Generator) fieldsToList(fields protoreflect.FieldDescriptors) []protore
 func (g *Generator) isMessageRequired(message protoreflect.MessageDescriptor) bool {
 
 	// if types are not provided in options, we should generate all types in the proto.
-	if len(g.options.types) == 0 {
+	if len(g.types) == 0 {
 		return true
 	}
 
 	// if types option is provided, check if the message type is one of the provided types.
-	for _, t := range g.options.types {
+	for _, t := range g.types {
 		if t == string(message.Name()) {
 			return true
 		}

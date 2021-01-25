@@ -1,3 +1,4 @@
+# Clones Teleport and builds tfschema. protoc and protobuf must be installed.
 gopath = $(shell go env GOPATH)
 srcpath = $(gopath)/src
 teleport_url = github.com/gravitational/teleport
@@ -7,7 +8,7 @@ teleport_dir = $(srcpath)/$(teleport_url)
 .PHONY: example
 example: build
 ifeq ("$(wildcard $(teleport_dir))", "")
-	@echo "Teleport is required to be cloned from source to build this example!"
+	@echo "Teleport source code is required to build this example!"
 	@echo "Cloning teleport repo $(teleport_repo) to $(teleport_dir)"
 	@git clone $(teleport_repo) $(teleport_dir)
 endif
@@ -20,5 +21,5 @@ endif
 		--tfschema_out=./out \
 		--go_out=./out \
 		--plugin=./build/protoc-gen-tfschema \
-		--tfschema_opt="types=Metadata UserSpecV2 UserV2" \
+		--tfschema_opt="types=Metadata,UserSpecV2,UserV2" \
 		types.proto
