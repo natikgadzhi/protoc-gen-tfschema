@@ -1,0 +1,73 @@
+# github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
+## explicit
+# github.com/alecthomas/colour v0.1.0
+## explicit
+# github.com/alecthomas/repr v0.0.0-20201120212035-bb82daffcca2
+## explicit
+# github.com/gogo/protobuf v1.3.1
+## explicit
+# github.com/golang/protobuf v1.4.2
+## explicit
+# github.com/gravitational/configure v0.0.0-20180808141939-c3428bd84c23
+## explicit
+# github.com/gravitational/kingpin v2.1.10+incompatible
+## explicit
+# github.com/gravitational/trace v1.1.12
+## explicit
+github.com/gravitational/trace
+# github.com/hashicorp/terraform v0.14.4
+## explicit
+# github.com/jonboulle/clockwork v0.2.2
+## explicit
+github.com/jonboulle/clockwork
+# github.com/pborman/uuid v1.2.1
+## explicit
+# github.com/pquerna/otp v1.3.0
+## explicit
+# github.com/sirupsen/logrus v1.7.0
+## explicit
+github.com/sirupsen/logrus
+# github.com/xeipuuv/gojsonschema v1.2.0
+## explicit
+# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+golang.org/x/crypto/ssh/terminal
+# golang.org/x/net v0.0.0-20201021035429-f5854403a974
+golang.org/x/net/context
+# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# google.golang.org/protobuf v1.25.0
+## explicit
+google.golang.org/protobuf/compiler/protogen
+google.golang.org/protobuf/encoding/prototext
+google.golang.org/protobuf/encoding/protowire
+google.golang.org/protobuf/internal/descfmt
+google.golang.org/protobuf/internal/descopts
+google.golang.org/protobuf/internal/detrand
+google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/messageset
+google.golang.org/protobuf/internal/encoding/tag
+google.golang.org/protobuf/internal/encoding/text
+google.golang.org/protobuf/internal/errors
+google.golang.org/protobuf/internal/fieldsort
+google.golang.org/protobuf/internal/filedesc
+google.golang.org/protobuf/internal/filetype
+google.golang.org/protobuf/internal/flags
+google.golang.org/protobuf/internal/genid
+google.golang.org/protobuf/internal/impl
+google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/pragma
+google.golang.org/protobuf/internal/set
+google.golang.org/protobuf/internal/strs
+google.golang.org/protobuf/internal/version
+google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protodesc
+google.golang.org/protobuf/reflect/protoreflect
+google.golang.org/protobuf/reflect/protoregistry
+google.golang.org/protobuf/runtime/protoiface
+google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
+google.golang.org/protobuf/types/pluginpb
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit
