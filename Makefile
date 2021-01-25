@@ -12,3 +12,6 @@ build: clean
 .PHONY: install
 install: build
 	go install .
+
+# make example
+include example.mk

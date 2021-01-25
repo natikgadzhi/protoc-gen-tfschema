@@ -49,6 +49,7 @@ type GeneratorOptions struct {
 // NewGenerator returns new generator instance.
 func NewGenerator(plugin *protogen.Plugin) *Generator {
 	g := &Generator{Plugin: plugin}
+	log.Infof(g.Plugin.Request.GetParameter())
 	g.options = parseCommandLineOptions(g.Plugin.Request.GetParameter())
 	return g
 }
