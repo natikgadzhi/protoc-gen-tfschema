@@ -21,6 +21,18 @@ func NewResource() *Resource {
 	}
 }
 
+// BuildResourceFromMessage creates new resource from message
+func BuildResourceFromMessage(message *protoreflect.MessageDescriptor) *Resource {
+	resource := NewResource()
+
+	builder := resourceBuilder{message: *message, resource: resource}
+
+	builder.setName()
+	builder.setFullName()
+
+	return resource
+}
+
 type resourceBuilder struct {
 	message  protoreflect.MessageDescriptor
 	resource *Resource
@@ -32,16 +44,4 @@ func (b *resourceBuilder) setName() {
 
 func (b *resourceBuilder) setFullName() {
 	b.resource.FullName = string(b.message.FullName())
-}
-
-// BuildResourceFromMessage creates new resource from message
-func BuildResourceFromMessage(message *protoreflect.MessageDescriptor) *Resource {
-	resource := NewResource()
-
-	builder := resourceBuilder{message: *message, resource: resource}
-
-	builder.setName()
-	builder.setFullName()
-
-	return resource
 }

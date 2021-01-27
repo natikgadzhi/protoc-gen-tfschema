@@ -15,6 +15,20 @@ type Schema struct {
 	schema.Schema
 }
 
+// BuildSchemaFromField builds resource from protoreflect message
+func BuildSchemaFromField(field *protoreflect.FieldDescriptor) *Schema {
+	schema := &Schema{}
+
+	b := schemaBuilder{field: *field, schema: schema}
+
+	b.setName()
+	b.setFullName()
+	b.setRequired()
+	b.setTypeAndElem()
+
+	return schema
+}
+
 type schemaBuilder struct {
 	field  protoreflect.FieldDescriptor
 	schema *Schema
@@ -40,6 +54,7 @@ func (b *schemaBuilder) isNestedResource() bool {
 func (b *schemaBuilder) setTypeAndElem() {
 	kind := b.field.Kind()
 
+	// NOTE: How to tread MapKey()?
 	if b.field.IsMap() {
 		b.schema.Type = schema.TypeMap
 		b.setElem(b.field.MapValue().Kind(), b.field.MapValue().Message())
@@ -89,18 +104,4 @@ func (b *schemaBuilder) getTypeFromKind(kind protoreflect.Kind) schema.ValueType
 	log.Fatalf("Unknown schema kind %s!", kind.GoString())
 
 	return -1
-}
-
-// BuildSchemaFromField builds resource from protoreflect message
-func BuildSchemaFromField(field *protoreflect.FieldDescriptor) *Schema {
-	schema := &Schema{}
-
-	b := schemaBuilder{field: *field, schema: schema}
-
-	b.setName()
-	b.setFullName()
-	b.setRequired()
-	b.setTypeAndElem()
-
-	return schema
 }
