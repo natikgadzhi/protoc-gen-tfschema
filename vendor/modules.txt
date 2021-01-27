@@ -176,6 +176,9 @@ github.com/posener/complete
 github.com/posener/complete/cmd
 github.com/posener/complete/cmd/install
 github.com/posener/complete/match
+# github.com/sanity-io/litter v0.0.0-00010101000000-000000000000 => github.com/gzigzigzeo/litter v1.3.1-0.20210126033604-e45922096d71
+## explicit
+github.com/sanity-io/litter
 # github.com/sirupsen/logrus v1.7.0
 ## explicit
 github.com/sirupsen/logrus

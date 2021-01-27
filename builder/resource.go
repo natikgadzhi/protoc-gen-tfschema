@@ -1,22 +1,47 @@
 package builder
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import (
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"google.golang.org/protobuf/reflect/protoreflect"
+)
 
 // Resource extends Terraform resource with metadata required for file generation
 type Resource struct {
 	Name     string
 	FullName string
-	Schema   *SchemaMap // Overrrides schema.Resource.Schema
+	Schema   SchemaMap // Overrrides schema.Resource.Schema
 
-	*schema.Resource
+	schema.Resource
 }
 
-// NewResource creates resource
-func NewResource(name string, fullName string) *Resource {
-	return &Resource{Name: name, FullName: name, Schema: NewSchemaMap()}
+// NewResource builds and initializes an empty Resource
+func NewResource() *Resource {
+	return &Resource{
+		Schema: make(SchemaMap),
+	}
 }
 
-// AddSchema adds new schema to Schema
-func (r *Resource) AddSchema(name string, fullName string) *Schema {
-	return r.AddSchema(name, fullName)
+type resourceBuilder struct {
+	message  protoreflect.MessageDescriptor
+	resource *Resource
+}
+
+func (b *resourceBuilder) setName() {
+	b.resource.Name = string(b.message.Name())
+}
+
+func (b *resourceBuilder) setFullName() {
+	b.resource.FullName = string(b.message.FullName())
+}
+
+// BuildResourceFromMessage creates new resource from message
+func BuildResourceFromMessage(message *protoreflect.MessageDescriptor) *Resource {
+	resource := NewResource()
+
+	builder := resourceBuilder{message: *message, resource: resource}
+
+	builder.setName()
+	builder.setFullName()
+
+	return resource
 }

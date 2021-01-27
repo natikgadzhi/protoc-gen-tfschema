@@ -1,17 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
 	"github.com/gravitational/trace"
+	"github.com/nategadzhi/protoc-gen-tfschema/builder"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
-	"github.com/nategadzhi/protoc-gen-tfschema/reader"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
+
+	"github.com/sanity-io/litter"
 )
 
 var (
@@ -76,9 +79,11 @@ func generate() {
 		filename := file.GeneratedFilenamePrefix + generatedFileSuffix
 		out := plugin.NewGeneratedFile(filename, ".")
 
-		_ = reader.ReadFile(file)
+		resources := builder.BuildResourceMapFromFile(file)
 		// parsed = Parser.file
 		// result = Renderer.file
+
+		ioutil.WriteFile("/tmp/dat1", []byte(litter.Sdump(resources)), 777)
 
 		//_, err := out.Write(result.Bytes())
 		_, err := out.Write([]byte("ok"))
@@ -91,7 +96,7 @@ func generate() {
 		numFilesWritten++
 	}
 
-	log.Infof("%d files generated", numFilesWritten)
+	fmt.Println("%i files generated", numFilesWritten)
 }
 
 func emitResponse() {

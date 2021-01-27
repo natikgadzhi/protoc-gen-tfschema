@@ -1,17 +1,17 @@
 package builder
 
+import "google.golang.org/protobuf/reflect/protoreflect"
+
 // SchemaMap string -> *Schema
 type SchemaMap map[string]*Schema
 
-// NewSchemaMap initializes schema map
-func NewSchemaMap() *SchemaMap {
-	m := make(SchemaMap)
-	return &m
-}
+// BuildSchemaMapFromMessage reads and parses resource into schema map
+func BuildSchemaMapFromMessage(message *protoreflect.MessageDescriptor, resource *Resource) {
+	fields := (*message).Fields()
 
-// AddSchema add new schema entry
-func (m SchemaMap) AddSchema(name string, fullName string) *Schema {
-	s := NewSchema(fullName)
-	m[name] = s
-	return s
+	for i := 0; i < fields.Len(); i++ {
+		field := fields.Get(i)
+		schema := BuildSchemaFromField(&field)
+		resource.Schema[schema.Name] = schema
+	}
 }
