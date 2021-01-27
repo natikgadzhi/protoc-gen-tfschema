@@ -6,6 +6,7 @@ import (
 
 	"github.com/gravitational/trace"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
+	"github.com/nategadzhi/protoc-gen-tfschema/reader"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/protobuf/compiler/protogen"
@@ -15,12 +16,31 @@ import (
 
 var (
 	request = pluginpb.CodeGeneratorRequest{}
-	plugin  protogen.Plugin
+	plugin  *protogen.Plugin
+)
+
+const (
+	generatedFileSuffix = ".tfschema.go"
 )
 
 func init() {
 	initRequest()
 	initPlugin()
+}
+
+func main() {
+	log.Info("Generating schema files...")
+
+	generate()
+	emitResponse()
+
+	// generator := gen.NewGenerator(plugin)
+	// generated, err := generator.Generate()
+	// if err != nil {
+	// 	log.Errorf("Error generating schemas: %v", err)
+	// 	generator.Plugin.Error(err)
+	// }
+	// log.Infof("Done, generated %d files", len(generated))
 }
 
 // Parses and initializes CodeGeneratorRequest
@@ -32,14 +52,18 @@ func initRequest() {
 		fatal(err)
 	}
 	proto.Unmarshal(input, &request)
+
+	log.Info("Command-line arguments: %s", request.GetParameter())
 }
 
-// Parses command line options and initializes Plugin
+// Parses command line options and initializes Plugin instance
 func initPlugin() {
+	var err error
+
 	opts := &protogen.Options{
-		ParamFunc: config.Set,
+		ParamFunc: config.Set, // Built-in way of using go flag package to parse CLI args
 	}
-	_, err := opts.New(&request)
+	plugin, err = opts.New(&request)
 	if err != nil {
 		fatal(err)
 	}
@@ -47,27 +71,47 @@ func initPlugin() {
 	config.Finalize()
 }
 
-func main() {
-	// // 3. Run plugin, generate schema files
-	// log.Info("Generating schema files...")
-	// generator := gen.NewGenerator(plugin)
-	// generated, err := generator.Generate()
-	// if err != nil {
-	// 	log.Errorf("Error generating schemas: %v", err)
-	// 	generator.Plugin.Error(err)
-	// }
-	// log.Infof("Done, generated %d files", len(generated))
+// Parses input files and writes parsed files back to plugin
+func generate() {
+	var numFilesWritten = 0
 
-	// // 4. Put response back to stdout
-	// buf, err := proto.Marshal(generator.Plugin.Response())
-	// if err != nil {
-	// 	fatal(err)
-	// }
-	// if _, err := os.Stdout.Write(buf); err != nil {
-	// 	fatal(err)
-	// }
+	for _, file := range plugin.Files {
+		if !file.Generate {
+			continue
+		}
+
+		// Target file name
+		filename := file.GeneratedFilenamePrefix + generatedFileSuffix
+		out := plugin.NewGeneratedFile(filename, ".")
+
+		_ = reader.ReadFile(file)
+		// parsed = Parser.file
+		// result = Renderer.file
+
+		//_, err := out.Write(result.Bytes())
+		_, err := out.Write([]byte("ok"))
+		if err != nil {
+			fatal(err)
+		}
+
+		log.Infof("%s prepared", filename)
+		numFilesWritten++
+	}
+
+	log.Infof("%d files will be written", numFilesWritten)
 }
 
+func emitResponse() {
+	buf, err := proto.Marshal(plugin.Response())
+	if err != nil {
+		fatal(err)
+	}
+	if _, err := os.Stdout.Write(buf); err != nil {
+		fatal(err)
+	}
+}
+
+// Sugar
 func fatal(err error) {
 	log.Fatal(trace.Wrap(err).Error())
 }

@@ -2,30 +2,37 @@ package reader
 
 import (
 	"github.com/nategadzhi/protoc-gen-tfschema/builder"
-	"github.com/nategadzhi/protoc-gen-tfschema/util"
+	"github.com/nategadzhi/protoc-gen-tfschema/config"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Parse returns SchemaMap parsed from the file
+// ReadFile returns SchemaMap parsed from the file
 func ReadFile(file *protogen.File) *builder.SchemaMap {
 	messages := file.Desc.Messages()
 
 	for i := 0; i < messages.Len(); i++ {
 		message := messages.Get(i)
 
-		if isMessageParseable(message) {
+		if isMessageRequired(message) {
+
 		}
 	}
 
 	return &builder.SchemaMap{}
 }
 
-// Checks if current message needs to be exported (name was passed in command line argument or argument is empty)
-func isMessageParseable(message protoreflect.MessageDescriptor) bool {
-	if len(main.Types) == 0 {
+// Checks if current message needs to be parsed & exported
+func isMessageRequired(message protoreflect.MessageDescriptor) bool {
+	if len(config.Types) == 0 {
 		return true
 	}
 
-	return util.StrSliceContains(Types, string(message.Name()))
+	for _, v := range config.Types {
+		if v == string(message.Name()) {
+			return true
+		}
+	}
+
+	return false
 }
