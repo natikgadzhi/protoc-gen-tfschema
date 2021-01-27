@@ -4,6 +4,7 @@ srcpath = $(gopath)/src
 teleport_url = github.com/gravitational/teleport
 teleport_repo = https://$(teleport_url)
 teleport_dir = $(srcpath)/$(teleport_url)
+out_dir = "./_out"
 
 .PHONY: example
 example: build
@@ -18,8 +19,8 @@ endif
 		-I$(teleport_dir)/vendor/github.com/gogo/protobuf \
 		-I$(teleport_dir) \
 		-I$(srcpath) \
-		--tfschema_out=./out \
-		--go_out=./out \
+		--tfschema_out=.$(out_dir) \
+		--go_out=$(out_dir) \
 		--plugin=./build/protoc-gen-tfschema \
-		--tfschema_opt="types=Metadata,UserSpecV2,UserV2" \
+		--tfschema_opt="pkgname=test,types=Metadata:UserSpecV2:UserV2" \
 		types.proto
