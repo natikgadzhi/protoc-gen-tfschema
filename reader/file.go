@@ -8,18 +8,23 @@ import (
 )
 
 // ReadFile returns SchemaMap parsed from the file
-func ReadFile(file *protogen.File) *builder.SchemaMap {
+func ReadFile(file *protogen.File) *builder.ResourceMap {
+	r := builder.NewResourceMap()
 	messages := file.Desc.Messages()
 
 	for i := 0; i < messages.Len(); i++ {
 		message := messages.Get(i)
 
 		if isMessageRequired(message) {
+			name := string(message.Name())
+			fullName := string(message.FullName())
 
+			resource := r.AddResource(name, fullName)
+			ReadMessage(&message, resource)
 		}
 	}
 
-	return &builder.SchemaMap{}
+	return r
 }
 
 // Checks if current message needs to be parsed & exported

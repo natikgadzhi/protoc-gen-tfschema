@@ -4,16 +4,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
+// Schema extends Terraform Schema with metadata
 type Schema struct {
-	schema schema.Schema
+	FullName string
+
+	*schema.Schema
+}
+
+func NewSchema(fullName string) *Schema {
+	return &Schema{FullName: fullName}
 }
 
 func (s *Schema) SetType(t schema.ValueType) *Schema {
-	s.schema.Type = t
+	s.Type = t
 	return s
 }
 
 func (s *Schema) SetRequired(r bool) *Schema {
-	s.schema.Required = r
+	s.Required = r
 	return s
 }

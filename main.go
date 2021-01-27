@@ -33,14 +33,6 @@ func main() {
 
 	generate()
 	emitResponse()
-
-	// generator := gen.NewGenerator(plugin)
-	// generated, err := generator.Generate()
-	// if err != nil {
-	// 	log.Errorf("Error generating schemas: %v", err)
-	// 	generator.Plugin.Error(err)
-	// }
-	// log.Infof("Done, generated %d files", len(generated))
 }
 
 // Parses and initializes CodeGeneratorRequest
@@ -91,14 +83,15 @@ func generate() {
 		//_, err := out.Write(result.Bytes())
 		_, err := out.Write([]byte("ok"))
 		if err != nil {
-			fatal(err)
+			log.Errorf("Error generating schemas: %v", err)
+			plugin.Error(err)
 		}
 
 		log.Infof("%s prepared", filename)
 		numFilesWritten++
 	}
 
-	log.Infof("%d files will be written", numFilesWritten)
+	log.Infof("%d files generated", numFilesWritten)
 }
 
 func emitResponse() {
