@@ -30,6 +30,8 @@ func BuildResourceFromMessage(message *protoreflect.MessageDescriptor) *Resource
 	builder.setName()
 	builder.setFullName()
 
+	BuildSchemaMapFromMessage(message, resource)
+
 	return resource
 }
 

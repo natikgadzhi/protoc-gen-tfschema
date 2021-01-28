@@ -70,7 +70,7 @@ func helpers() template.FuncMap {
 				return "<missing>"
 			}
 
-			return fmt.Sprintf("schema%s", r.Name)
+			return fmt.Sprintf("schema%s()", r.Name)
 		},
 	}
 }

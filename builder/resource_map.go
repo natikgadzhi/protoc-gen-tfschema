@@ -19,8 +19,6 @@ func BuildResourceMapFromFile(file *protogen.File) *ResourceMap {
 
 		if isMessageRequired(message) {
 			resource := BuildResourceFromMessage(&message)
-			BuildSchemaMapFromMessage(&message, resource)
-
 			m[resource.Name] = resource
 		}
 	}

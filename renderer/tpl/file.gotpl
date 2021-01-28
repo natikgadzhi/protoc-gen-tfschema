@@ -16,16 +16,16 @@ func schema{{ .Name }}() map[string]*schema.Schema {
 }
 {{ end }}
 
-{{ define "schemaMap" -}}
+{{- define "schemaMap" -}}
 map[string]*schema.Schema {
 {{- range . }}
 	// {{ .FullName }}
 	"{{ .Name }}": {{ template "schema" . }}
 {{- end }}
 }
-{{ end }}
+{{- end -}}
 
-{{ define "schema" -}}
+{{- define "schema" -}}
 {
 	Type: {{ .Type }},
 	Required: {{ .Required }},
@@ -38,12 +38,18 @@ map[string]*schema.Schema {
 	ValidateFunc: somefunc,
 	{{- end }}
 
-	{{- if .Elem }}
-	{{- if IsSchema .Elem }}
-	Elem: &schema.Schema {{- template "schema" .Elem }}
-	{{- else }}
-	Elem: &resource.Resource { Schema: {{ LookupResourceFn .Elem }} }
-	{{- end }}
-	{{- end }}
+	{{- template "elem" .Elem }}
+},
+{{- end -}}
+
+{{ define "elem" -}}
+{{- if . }}
+{{- if IsSchema . }}
+Elem: &schema.Schema {{- template "schema" . }}
+{{- else }}
+Elem: &resource.Resource {
+	Schema: {{- template "schemaMap" .Schema }},
 },
 {{- end }}
+{{- end }}
+{{ end }}

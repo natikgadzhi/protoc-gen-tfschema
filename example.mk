@@ -22,5 +22,5 @@ endif
 		--tfschema_out=$(out_dir) \
 		--go_out=$(out_dir) \
 		--plugin=./build/protoc-gen-tfschema \
-		--tfschema_opt="pkgname=tfschema,types=Metadata:UserSpecV2:UserV2" \
+		--tfschema_opt="pkgname=tfschema,types=UserSpecV2:Metadata:UserV2" \
 		types.proto
