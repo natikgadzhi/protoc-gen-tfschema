@@ -3,6 +3,7 @@ package renderer
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"path"
 	"runtime"
 	"text/template"
@@ -58,8 +59,18 @@ func Render(resources *builder.ResourceMap, version string) (*bytes.Buffer, erro
 
 func helpers() template.FuncMap {
 	return template.FuncMap{
+		// IsSchema returns true if an element is a schema
 		"IsSchema": func(i interface{}) bool {
 			_, ok := i.(*builder.Schema)
 			return ok
-		}}
+		},
+		"LookupResourceFn": func(i interface{}) string {
+			r, ok := i.(*builder.Resource)
+			if !ok {
+				return "<missing>"
+			}
+
+			return fmt.Sprintf("schema%s", r.Name)
+		},
+	}
 }

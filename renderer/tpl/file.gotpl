@@ -41,6 +41,8 @@ map[string]*schema.Schema {
 	{{- if .Elem }}
 	{{- if IsSchema .Elem }}
 	Elem: &schema.Schema {{- template "schema" .Elem }}
+	{{- else }}
+	Elem: &resource.Resource { Schema: {{ LookupResourceFn .Elem }} }
 	{{- end }}
 	{{- end }}
 },
