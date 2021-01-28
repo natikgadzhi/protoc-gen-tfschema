@@ -83,12 +83,17 @@ func generate() {
 		filename := file.GeneratedFilenamePrefix + generatedFileSuffix
 		out := plugin.NewGeneratedFile(filename, ".")
 
+		// Build resource tree
 		resources := builder.BuildResourceMapFromFile(file)
-		result := renderer.Render(resources, Version)
-		// ioutil.WriteFile("/tmp/dat1", []byte(litter.Sdump(resources)), 777)
 
-		//_, err := out.Write(result.Bytes())
-		_, err := out.Write(result.Bytes())
+		// Render final template
+		result, err := renderer.Render(resources, Version)
+		if err != nil {
+			log.Errorf("Error rendering template: %v", err)
+			plugin.Error(err)
+		}
+
+		_, err = out.Write(result.Bytes())
 		if err != nil {
 			log.Errorf("Error generating schemas: %v", err)
 			plugin.Error(err)

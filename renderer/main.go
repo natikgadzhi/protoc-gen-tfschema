@@ -2,48 +2,55 @@ package renderer
 
 import (
 	"bytes"
-	"log"
 	"path"
 	"runtime"
 	"text/template"
 
 	"github.com/nategadzhi/protoc-gen-tfschema/builder"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
+	"google.golang.org/protobuf/internal/errors"
+)
+
+const (
+	templateFilename = "file.gotpl"
+	templatesDir     = "/renderer/tpl"
 )
 
 type viewData struct {
 	Version       string
 	ProtocVersion string
 	PackageName   string
+	Resources     *builder.ResourceMap
 }
 
 // Render renders file
-func Render(resource *builder.ResourceMap, version string) *bytes.Buffer {
+func Render(resources *builder.ResourceMap, version string) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
 
 	_, filename, _, ok := runtime.Caller(1)
 
 	if !ok {
-		log.Fatal("Can't get path to runtime file")
+		return nil, errors.Error("Can't get path to runtime file")
 	}
 
-	filepath := path.Join(path.Dir(filename), "/renderer/tpl/file.gotpl")
+	filepath := path.Join(path.Dir(filename), templatesDir, templateFilename)
 
 	tpl, err := template.ParseFiles(filepath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	data := viewData{
 		PackageName:   *config.PackageName,
 		ProtocVersion: config.ProtocVersion,
 		Version:       version,
+		Resources:     resources,
 	}
 
-	err = tpl.ExecuteTemplate(&buf, "file.gotpl", data)
+	err = tpl.ExecuteTemplate(&buf, templateFilename, data)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return &buf
+	return &buf, nil
 }
