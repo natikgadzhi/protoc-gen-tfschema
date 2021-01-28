@@ -40,7 +40,7 @@ func Finalize() {
 }
 
 func dump() {
-	log.Infof("Package name: %s", PackageName)
+	log.Infof("Package name: %s", *PackageName)
 	log.Infof("Types to export: %s", Types)
 	log.Infof("Protoc version: %s", ProtocVersion)
 }

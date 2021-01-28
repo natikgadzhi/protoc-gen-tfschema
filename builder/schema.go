@@ -3,7 +3,8 @@ package builder
 import (
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -51,10 +52,11 @@ func (b *schemaBuilder) isNestedResource() bool {
 	return b.field.Kind() == protoreflect.MessageKind && !b.field.IsList()
 }
 
+// Sets type and nested elem type
 func (b *schemaBuilder) setTypeAndElem() {
 	kind := b.field.Kind()
 
-	// NOTE: How to tread MapKey()?
+	// NOTE: How to treat MapKey()?
 	if b.field.IsMap() {
 		b.schema.Type = schema.TypeMap
 		b.setElem(b.field.MapValue().Kind(), b.field.MapValue().Message())
@@ -62,16 +64,27 @@ func (b *schemaBuilder) setTypeAndElem() {
 		b.schema.Type = schema.TypeList
 		b.setElem(b.field.Kind(), b.field.Message())
 	} else if b.isNestedResource() {
-		// If the nested resource is another structure, than we should produce a list with the single item
-		// That's the weirdo way Terraform handles such case
-		b.schema.Type = schema.TypeList
-		b.schema.MaxItems = 1
-		b.setElem(b.field.Kind(), b.field.Message())
+		b.setNestedResourceTypeAndElem()
 	} else {
 		b.schema.Type = b.getTypeFromKind(kind)
 	}
 }
 
+// Branch for nested resources
+func (b *schemaBuilder) setNestedResourceTypeAndElem() {
+	if b.isTimeStamp() {
+		b.schema.Type = schema.TypeString
+		b.schema.ValidateFunc = validation.IsRFC3339Time
+	} else {
+		// If the nested resource is another structure, than we should produce a list with the single item
+		// That's the weirdo way Terraform handles such case
+		b.schema.Type = schema.TypeList
+		b.schema.MaxItems = 1
+		b.setElem(b.field.Kind(), b.field.Message())
+	}
+}
+
+// Sets nested element type and builds schema for it if required
 func (b *schemaBuilder) setElem(kind protoreflect.Kind, message protoreflect.MessageDescriptor) {
 	var elem interface{}
 
@@ -86,6 +99,7 @@ func (b *schemaBuilder) setElem(kind protoreflect.Kind, message protoreflect.Mes
 	b.schema.Elem = elem
 }
 
+// Converts protoc kind to Terraform type
 func (b *schemaBuilder) getTypeFromKind(kind protoreflect.Kind) schema.ValueType {
 	switch kind {
 	case protoreflect.BoolKind:
@@ -104,4 +118,9 @@ func (b *schemaBuilder) getTypeFromKind(kind protoreflect.Kind) schema.ValueType
 	log.Fatalf("Unknown schema kind %s!", kind.GoString())
 
 	return -1
+}
+
+// Returns true if a field represents TimeStamp
+func (b *schemaBuilder) isTimeStamp() bool {
+	return string(b.field.Message().FullName()) == "google.protobuf.Timestamp"
 }

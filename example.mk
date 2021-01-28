@@ -19,7 +19,7 @@ endif
 		-I$(teleport_dir)/vendor/github.com/gogo/protobuf \
 		-I$(teleport_dir) \
 		-I$(srcpath) \
-		--tfschema_out=.$(out_dir) \
+		--tfschema_out=$(out_dir) \
 		--go_out=$(out_dir) \
 		--plugin=./build/protoc-gen-tfschema \
 		--tfschema_opt="pkgname=test,types=Metadata:UserSpecV2:UserV2" \

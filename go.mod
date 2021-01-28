@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/gravitational/trace v1.1.13
-	github.com/hashicorp/terraform-plugin-sdk v1.16.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.2
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/sanity-io/litter v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.7.0

@@ -8,13 +8,12 @@ import (
 	"github.com/gravitational/trace"
 	"github.com/nategadzhi/protoc-gen-tfschema/builder"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
+	"github.com/nategadzhi/protoc-gen-tfschema/renderer"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
-
-	"github.com/sanity-io/litter"
 )
 
 var (
@@ -48,7 +47,7 @@ func initRequest() {
 	}
 	proto.Unmarshal(input, &request)
 
-	log.Info("Command-line arguments: %s", request.GetParameter())
+	log.Infof("Command-line arguments: %s", request.GetParameter())
 }
 
 // Parses command line options and initializes Plugin instance
@@ -61,6 +60,11 @@ func initPlugin() {
 	plugin, err = opts.New(&request)
 	if err != nil {
 		fatal(err)
+	}
+
+	// Save ProtocVersion
+	if v := plugin.Request.GetCompilerVersion(); v != nil {
+		config.ProtocVersion = fmt.Sprintf("v%v.%v.%v", v.GetMajor(), v.GetMinor(), v.GetPatch())
 	}
 
 	config.Finalize()
@@ -80,13 +84,11 @@ func generate() {
 		out := plugin.NewGeneratedFile(filename, ".")
 
 		resources := builder.BuildResourceMapFromFile(file)
-		// parsed = Parser.file
-		// result = Renderer.file
-
-		ioutil.WriteFile("/tmp/dat1", []byte(litter.Sdump(resources)), 777)
+		result := renderer.Render(resources, Version)
+		// ioutil.WriteFile("/tmp/dat1", []byte(litter.Sdump(resources)), 777)
 
 		//_, err := out.Write(result.Bytes())
-		_, err := out.Write([]byte("ok"))
+		_, err := out.Write(result.Bytes())
 		if err != nil {
 			log.Errorf("Error generating schemas: %v", err)
 			plugin.Error(err)
@@ -96,7 +98,7 @@ func generate() {
 		numFilesWritten++
 	}
 
-	fmt.Println("%i files generated", numFilesWritten)
+	log.Infof("%i files generated", numFilesWritten)
 }
 
 func emitResponse() {
