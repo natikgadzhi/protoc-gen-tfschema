@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -10,8 +9,6 @@ type Resource struct {
 	Name     string
 	FullName string
 	Schema   SchemaMap // Overrrides schema.Resource.Schema
-
-	schema.Resource
 }
 
 // NewResource builds and initializes an empty Resource

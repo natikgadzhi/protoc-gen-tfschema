@@ -3,17 +3,18 @@ package builder
 import (
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // Schema extends Terraform Schema with metadata
 type Schema struct {
-	Name     string
-	FullName string
-
-	schema.Schema
+	Name         string
+	FullName     string
+	Required     bool
+	Type         string
+	ValidateFunc string
+	MaxItems     int
+	Elem         interface{}
 }
 
 // BuildSchemaFromField builds resource from protoreflect message
@@ -58,10 +59,10 @@ func (b *schemaBuilder) setTypeAndElem() {
 
 	// NOTE: How to treat MapKey()?
 	if b.field.IsMap() {
-		b.schema.Type = schema.TypeMap
+		b.schema.Type = "schema.TypeMap"
 		b.setElem(b.field.MapValue().Kind(), b.field.MapValue().Message())
 	} else if b.field.IsList() {
-		b.schema.Type = schema.TypeList
+		b.schema.Type = "schema.TypeList"
 		b.setElem(b.field.Kind(), b.field.Message())
 	} else if b.isNestedResource() {
 		b.setNestedResourceTypeAndElem()
@@ -73,12 +74,12 @@ func (b *schemaBuilder) setTypeAndElem() {
 // Branch for nested resources
 func (b *schemaBuilder) setNestedResourceTypeAndElem() {
 	if b.isTimeStamp() {
-		b.schema.Type = schema.TypeString
-		b.schema.ValidateFunc = validation.IsRFC3339Time
+		b.schema.Type = "schema.TypeString"
+		b.schema.ValidateFunc = "validation.IsRFC3339Time"
 	} else {
 		// If the nested resource is another structure, than we should produce a list with the single item
 		// That's the weirdo way Terraform handles such case
-		b.schema.Type = schema.TypeList
+		b.schema.Type = "schema.TypeList"
 		b.schema.MaxItems = 1
 		b.setElem(b.field.Kind(), b.field.Message())
 	}
@@ -100,24 +101,24 @@ func (b *schemaBuilder) setElem(kind protoreflect.Kind, message protoreflect.Mes
 }
 
 // Converts protoc kind to Terraform type
-func (b *schemaBuilder) getTypeFromKind(kind protoreflect.Kind) schema.ValueType {
+func (b *schemaBuilder) getTypeFromKind(kind protoreflect.Kind) string {
 	switch kind {
 	case protoreflect.BoolKind:
-		return schema.TypeBool
+		return "schema.TypeBool"
 	case protoreflect.StringKind, protoreflect.BytesKind, protoreflect.EnumKind:
-		return schema.TypeString
+		return "schema.TypeString"
 	case protoreflect.Int32Kind, protoreflect.Int64Kind,
 		protoreflect.Fixed32Kind, protoreflect.Fixed64Kind,
 		protoreflect.Uint32Kind, protoreflect.Uint64Kind:
-		return schema.TypeInt
+		return "schema.TypeInt"
 	case protoreflect.DoubleKind:
-		return schema.TypeFloat
+		return "schema.TypeFloat"
 	}
 
 	// TODO: proper error handling here
 	log.Fatalf("Unknown schema kind %s!", kind.GoString())
 
-	return -1
+	return ""
 }
 
 // Returns true if a field represents TimeStamp
