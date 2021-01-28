@@ -12,17 +12,21 @@ import (
 {{ range $index, $resource := .Resources }}
 // Type full name: {{ .FullName }}
 func schema{{ .Name }}() map[string]*schema.Schema {
-	return {{ template "schema" .Schema -}}
+	return {{ template "schemaMap" .Schema -}}
+}
+{{ end }}
+
+{{ define "schemaMap" -}}
+map[string]*schema.Schema {
+{{- range . }}
+	// {{ .FullName }}
+	"{{ .Name }}": {{ template "schema" . }}
+{{- end }}
 }
 {{ end }}
 
 {{ define "schema" -}}
-map[string]*schema.Schema {
-{{- range . }}
-	// {{ .FullName }}
-	"{{ .Name }}": {
-		Type: {{ .Type }},
-	},
-{{- end }}
-}
-{{ end }}
+{
+	Type: {{ .Type }},
+},
+{{ -end }}
