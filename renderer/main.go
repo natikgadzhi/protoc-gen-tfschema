@@ -2,13 +2,13 @@ package renderer
 
 import (
 	"bytes"
+	"errors"
 	"path"
 	"runtime"
 	"text/template"
 
 	"github.com/nategadzhi/protoc-gen-tfschema/builder"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
-	"google.golang.org/protobuf/internal/errors"
 )
 
 const (
@@ -30,7 +30,7 @@ func Render(resources *builder.ResourceMap, version string) (*bytes.Buffer, erro
 	_, filename, _, ok := runtime.Caller(1)
 
 	if !ok {
-		return nil, errors.Error("Can't get path to runtime file")
+		return nil, errors.New("Can't get path to runtime file")
 	}
 
 	filepath := path.Join(path.Dir(filename), templatesDir, templateFilename)

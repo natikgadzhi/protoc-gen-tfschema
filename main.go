@@ -103,7 +103,7 @@ func generate() {
 		numFilesWritten++
 	}
 
-	log.Infof("%i files generated", numFilesWritten)
+	log.Infof("%v files generated", numFilesWritten)
 }
 
 func emitResponse() {

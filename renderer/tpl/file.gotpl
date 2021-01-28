@@ -9,3 +9,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+{{ range $index, $resource := .Resources }}
+// Type full name: {{ .FullName }}
+func schema{{ .Name }}() map[string]*schema.Schema {
+	return {{ template "schema" .Schema -}}
+}
+{{ end }}
+
+{{ define "schema" -}}
+map[string]*schema.Schema {
+{{- range . }}
+	// {{ .FullName }}
+	"{{ .Name }}": {
+		Type: {{ .Type }},
+	},
+{{- end }}
+}
+{{ end }}
