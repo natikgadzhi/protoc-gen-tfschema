@@ -93,7 +93,7 @@ func (b *schemaBuilder) setElem(kind protoreflect.Kind, message protoreflect.Mes
 	} else {
 		s := Schema{}
 		s.Type = b.getTypeFromKind(kind)
-		elem = s
+		elem = &s
 	}
 
 	b.schema.Elem = elem

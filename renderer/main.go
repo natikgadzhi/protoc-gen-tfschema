@@ -35,7 +35,8 @@ func Render(resources *builder.ResourceMap, version string) (*bytes.Buffer, erro
 
 	filepath := path.Join(path.Dir(filename), templatesDir, templateFilename)
 
-	tpl, err := template.ParseFiles(filepath)
+	tpl, err := template.New("test").Funcs(helpers()).ParseFiles(filepath)
+
 	if err != nil {
 		return nil, err
 	}
@@ -53,4 +54,12 @@ func Render(resources *builder.ResourceMap, version string) (*bytes.Buffer, erro
 	}
 
 	return &buf, nil
+}
+
+func helpers() template.FuncMap {
+	return template.FuncMap{
+		"IsSchema": func(i interface{}) bool {
+			_, ok := i.(*builder.Schema)
+			return ok
+		}}
 }

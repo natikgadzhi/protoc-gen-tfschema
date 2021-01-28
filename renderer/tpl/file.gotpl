@@ -28,5 +28,20 @@ map[string]*schema.Schema {
 {{ define "schema" -}}
 {
 	Type: {{ .Type }},
+	Required: {{ .Required }},
+
+	{{- if .MaxItems }}
+	MaxItems: {{ .MaxItems }},
+	{{- end }}
+
+	{{- if .ValidateFunc }}
+	ValidateFunc: somefunc,
+	{{- end }}
+
+	{{- if .Elem }}
+	{{- if IsSchema .Elem }}
+	Elem: &schema.Schema {{- template "schema" .Elem }}
+	{{- end }}
+	{{- end }}
 },
-{{ -end }}
+{{- end }}
