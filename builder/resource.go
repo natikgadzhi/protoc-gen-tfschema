@@ -4,7 +4,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Resource extends Terraform resource with metadata required for file generation
+// Resource mock Terraform resource with metadata required for file generation
 type Resource struct {
 	Name     string
 	FullName string

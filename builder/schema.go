@@ -6,7 +6,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Schema extends Terraform Schema with metadata
+// Schema mock Terraform Schema with metadata
 type Schema struct {
 	Name         string
 	FullName     string
