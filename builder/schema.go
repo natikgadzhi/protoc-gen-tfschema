@@ -1,8 +1,7 @@
 package builder
 
 import (
-	"log"
-
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -123,10 +122,10 @@ func (b *schemaBuilder) getTypeFromKind(kind protoreflect.Kind) string {
 		return "schema.TypeFloat"
 	}
 
-	// TODO: proper error handling here
-	log.Fatalf("Unknown schema kind %s!", kind.GoString())
+	// Should not have happened
+	logrus.Fatalf("Unknown protoreflect kind %#v", kind)
 
-	return ""
+	return "schema.Unknown"
 }
 
 // Returns true if a field represents TimeStamp
