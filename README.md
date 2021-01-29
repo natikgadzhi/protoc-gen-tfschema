@@ -24,14 +24,21 @@ marshalling/unmarshalling components automatically.
 You'll still need to provide an API client initialization code, and call the API
 to execute CRUD features.
 
+We assume that protobuf & protobuf-gen-go are installed on your system.
+
 Here's how to generate resource schemas:
 
 ```bash
 
 go install github.com/nategadzhi/protoc-gen-tfschema
 
-protoc --proto_path ./proto/teleport --proto_path=. --proto_path=/Users/xnutsive/go/src/github.com/gravitational/teleport/vendor/github.com/gogo/protobuf --proto_path=/Users/xnutsive/go/src types.proto --tfschema_out=./out/teleport --go_out=./out/teleport --tfschema_opt="types=Metadata UserSpecV2 UserV2"
+protoc --proto_path ./proto/teleport --proto_path=. --proto_path=/Users/xnutsive/go/src/github.com/gravitational/teleport/vendor/github.com/gogo/protobuf --proto_path=/Users/xnutsive/go/src types.proto --tfschema_out=./out/teleport --go_out=./out/teleport --tfschema_opt="types=Metadata,UserSpecV2,UserV2"
+```
 
+You also could clone this repo and run:
+
+```
+make example # Builds example schema for Terraform
 ```
 
 ### Command line options
@@ -40,7 +47,7 @@ protoc --proto_path ./proto/teleport --proto_path=. --proto_path=/Users/xnutsive
 
 - `types` defines what Protobuf Messages (types) to generate resource schemas
   for.
-- `package` defines what package name to use for the resulting files. Defaults
+- `pkgname` defines what package name to use for the resulting files. Defaults
   to `tfschema`.
 
 ## Features
@@ -57,7 +64,7 @@ protoc --proto_path ./proto/teleport --proto_path=. --proto_path=/Users/xnutsive
 
 ### Next steps
 
-- [ ] An example project to test the generated schemas
+- [*] An example project to test the generated schemas
 - [ ] Provide unmarshalling generators
 - [ ] Provide terraform data source schema generators
 - [ ] Provide terraform schema importers, versions, and updaters
