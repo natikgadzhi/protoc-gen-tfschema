@@ -3,7 +3,6 @@ package renderer
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"path"
 	"runtime"
 	"text/template"
@@ -63,14 +62,6 @@ func helpers() template.FuncMap {
 		"IsSchema": func(i interface{}) bool {
 			_, ok := i.(*builder.Schema)
 			return ok
-		},
-		"LookupResourceFn": func(i interface{}) string {
-			r, ok := i.(*builder.Resource)
-			if !ok {
-				return "<missing>"
-			}
-
-			return fmt.Sprintf("schema%s()", r.Name)
 		},
 	}
 }
