@@ -17,11 +17,17 @@ type Schema struct {
 	Elem         interface{}
 }
 
+type schemaBuilder struct {
+	field       protoreflect.FieldDescriptor
+	schema      *Schema
+	resourceMap ResourceMap
+}
+
 // BuildSchemaFromField builds resource from protoreflect message
-func BuildSchemaFromField(field *protoreflect.FieldDescriptor) *Schema {
+func BuildSchemaFromField(field *protoreflect.FieldDescriptor, resourceMap ResourceMap) *Schema {
 	schema := &Schema{}
 
-	b := schemaBuilder{field: *field, schema: schema}
+	b := schemaBuilder{field: *field, schema: schema, resourceMap: resourceMap}
 
 	b.setName()
 	b.setFullName()
@@ -29,11 +35,6 @@ func BuildSchemaFromField(field *protoreflect.FieldDescriptor) *Schema {
 	b.setTypeAndElem()
 
 	return schema
-}
-
-type schemaBuilder struct {
-	field  protoreflect.FieldDescriptor
-	schema *Schema
 }
 
 func (b *schemaBuilder) setName() {
@@ -90,7 +91,8 @@ func (b *schemaBuilder) setElem(kind protoreflect.Kind, message protoreflect.Mes
 	var elem interface{}
 
 	if kind == protoreflect.MessageKind {
-		elem = BuildResourceFromMessage(&message)
+		r := b.buildNestedResource(message)
+		elem = r.Name
 	} else {
 		s := Schema{}
 		s.Type = b.getTypeFromKind(kind)
@@ -98,6 +100,12 @@ func (b *schemaBuilder) setElem(kind protoreflect.Kind, message protoreflect.Mes
 	}
 
 	b.schema.Elem = elem
+}
+
+func (b *schemaBuilder) buildNestedResource(message protoreflect.MessageDescriptor) *Resource {
+	resource := BuildResourceFromMessage(&message, b.resourceMap)
+	b.resourceMap[resource.Name] = resource
+	return resource
 }
 
 // Converts protoc kind to Terraform type

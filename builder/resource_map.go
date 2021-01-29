@@ -18,7 +18,7 @@ func BuildResourceMapFromFile(file *protogen.File) *ResourceMap {
 		message := messages.Get(i)
 
 		if isMessageRequired(message) {
-			resource := BuildResourceFromMessage(&message)
+			resource := BuildResourceFromMessage(&message, m)
 			m[resource.Name] = resource
 		}
 	}

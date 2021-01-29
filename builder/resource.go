@@ -11,6 +11,11 @@ type Resource struct {
 	Schema   SchemaMap // Overrrides schema.Resource.Schema
 }
 
+type resourceBuilder struct {
+	message  protoreflect.MessageDescriptor
+	resource *Resource
+}
+
 // NewResource builds and initializes an empty Resource
 func NewResource() *Resource {
 	return &Resource{
@@ -19,7 +24,7 @@ func NewResource() *Resource {
 }
 
 // BuildResourceFromMessage creates new resource from message
-func BuildResourceFromMessage(message *protoreflect.MessageDescriptor) *Resource {
+func BuildResourceFromMessage(message *protoreflect.MessageDescriptor, resourceMap ResourceMap) *Resource {
 	resource := NewResource()
 
 	builder := resourceBuilder{message: *message, resource: resource}
@@ -27,14 +32,9 @@ func BuildResourceFromMessage(message *protoreflect.MessageDescriptor) *Resource
 	builder.setName()
 	builder.setFullName()
 
-	BuildSchemaMapFromMessage(message, resource)
+	BuildSchemaMapFromMessage(message, resource, resourceMap)
 
 	return resource
-}
-
-type resourceBuilder struct {
-	message  protoreflect.MessageDescriptor
-	resource *Resource
 }
 
 func (b *resourceBuilder) setName() {
