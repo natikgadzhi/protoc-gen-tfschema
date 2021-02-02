@@ -47,7 +47,7 @@ map[string]*schema.Schema {
 {{- if IsSchema . }}
 Elem: &schema.Schema {{- template "schema" . }}
 {{- else }}
-Elem: &resource.Resource {
+Elem: &schema.Resource {
 	Schema: schema{{- . -}}(),
 },
 {{- end }}
