@@ -28,7 +28,11 @@ map[string]*schema.Schema {
 {{- define "schema" -}}
 {
 	Type: {{ .Type }},
-	Required: {{ .Required }},
+	{{- if .Required }}
+	Required: true,
+	{{- else }}
+	Optional: true,
+	{{- end }}
 
 	{{- if .MaxItems }}
 	MaxItems: {{ .MaxItems }},
