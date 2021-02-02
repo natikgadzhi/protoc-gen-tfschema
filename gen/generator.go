@@ -2,6 +2,7 @@ package gen
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/gravitational/trace"
@@ -200,7 +201,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 					Type: schema.%s,
 				},
 			},
-			`, field.Name(), requiredOrOptional(field), kindToTerraform(field.MapValue().Kind()))
+			`, CamelToSnakeCase(string(field.Name())), requiredOrOptional(field), kindToTerraform(field.MapValue().Kind()))
 		}
 
 		// map with string keys and complex type values
@@ -210,7 +211,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 				%s,
 				Elem: %s
 			},
-			`, field.Name(), requiredOrOptional(field), g.generateInlineMessageSchema(field.MapValue().Message()))
+			`, CamelToSnakeCase(string(field.Name())), requiredOrOptional(field), g.generateInlineMessageSchema(field.MapValue().Message()))
 		}
 	}
 
@@ -222,7 +223,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 				%s,
 				Elem: %s,
 			},
-			`, field.Name(), requiredOrOptional(field), g.generateInlineMessageSchema(field.Message()))
+			`, CamelToSnakeCase(string(field.Name())), requiredOrOptional(field), g.generateInlineMessageSchema(field.Message()))
 		}
 
 		// List of primitive type objects
@@ -231,7 +232,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 			%s,
 			Elem: &schema.Schema{Type: schema.%s},
 		},
-		`, field.Name(), requiredOrOptional(field), kindToTerraform(field.Kind()))
+		`, CamelToSnakeCase(string(field.Name())), requiredOrOptional(field), kindToTerraform(field.Kind()))
 	}
 
 	if field.Kind() == protoreflect.MessageKind {
@@ -245,7 +246,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 				%s,
 				ValidateFunc: validation.IsRFC3339Time,
 			},
-			`, field.Name(), requiredOrOptional(field))
+			`, CamelToSnakeCase(string(field.Name())), requiredOrOptional(field))
 		default:
 
 			// fields of custom time are represented as lists in TF schema
@@ -255,7 +256,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 				MaxItems:1,
 				Elem: %s,
 				},
-			`, field.Name(), requiredOrOptional(field), g.generateInlineMessageSchema(field.Message()))
+			`, CamelToSnakeCase(string(field.Name())), requiredOrOptional(field), g.generateInlineMessageSchema(field.Message()))
 		}
 
 	}
@@ -264,7 +265,7 @@ func (g *Generator) generateFieldSchema(field protoreflect.FieldDescriptor) stri
 		Type: schema.%s,
 		%s,
 	},
-	`, field.Name(), kindToTerraform(field.Kind()), requiredOrOptional(field))
+	`, CamelToSnakeCase(string(field.Name())), kindToTerraform(field.Kind()), requiredOrOptional(field))
 
 }
 
@@ -373,4 +374,15 @@ func requiredOrOptional(field protoreflect.FieldDescriptor) string {
 		return "Required: true"
 	}
 	return "Optional: true"
+}
+
+func CamelToSnakeCase(str string) string {
+
+	// Regex
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
 }
