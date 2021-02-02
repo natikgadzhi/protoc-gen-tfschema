@@ -286,8 +286,8 @@ func (g *Generator) generatePackageName(file *protogen.File) string {
 	package %s
 
 	import (
-		"github.com/hashicorp/terraform/helper/schema"
-		"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+		"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+		"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	)
 
 	`, Version, protocVersion, file.Desc.Path(), g.options.packageName)
