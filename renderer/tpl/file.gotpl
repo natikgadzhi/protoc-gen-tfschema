@@ -11,7 +11,7 @@ import (
 
 {{ range $index, $resource := .Resources }}
 // Type full name: {{ .FullName }}
-func schema{{ .Name }}() map[string]*schema.Schema {
+func Schema{{ .Name }}() map[string]*schema.Schema {
 	return {{ template "schemaMap" .Schema -}}
 }
 {{ end }}
@@ -48,7 +48,7 @@ map[string]*schema.Schema {
 Elem: &schema.Schema {{- template "schema" . }}
 {{- else }}
 Elem: &schema.Resource {
-	Schema: schema{{- . -}}(),
+	Schema: Schema{{- . -}}(),
 },
 {{- end }}
 {{- end }}
