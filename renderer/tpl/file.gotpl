@@ -46,10 +46,16 @@ map[string]*schema.Schema {
 },
 {{- end -}}
 
+{{- define "nestedSchema" -}}
+{
+	Type: {{ .Type }},
+},
+{{- end -}}
+
 {{ define "elem" -}}
 {{- if . }}
 {{- if IsSchema . }}
-Elem: &schema.Schema {{- template "schema" . }}
+Elem: &schema.Schema {{- template "nestedSchema" . }}
 {{- else }}
 Elem: &schema.Resource {
 	Schema: Schema{{- . -}}(),
