@@ -12,3 +12,7 @@ build: clean
 .PHONY: install
 install: build
 	go install .
+
+# make example
+# Clones Teleport repo to go/src, builds Teleport schema output with protoc
+include example.mk
