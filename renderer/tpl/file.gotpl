@@ -20,7 +20,7 @@ func schema{{ .Name }}() map[string]*schema.Schema {
 map[string]*schema.Schema {
 {{- range . }}
 	// {{ .FullName }}
-	"{{ .Name }}": {{ template "schema" . }}
+	"{{ SnakeCase .Name }}": {{ template "schema" . }}
 {{- end }}
 }
 {{- end -}}

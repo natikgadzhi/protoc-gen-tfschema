@@ -9,6 +9,7 @@ import (
 
 	"github.com/nategadzhi/protoc-gen-tfschema/builder"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
+	"github.com/stoewer/go-strcase"
 )
 
 const (
@@ -63,5 +64,6 @@ func helpers() template.FuncMap {
 			_, ok := i.(*builder.Schema)
 			return ok
 		},
+		"SnakeCase": strcase.SnakeCase,
 	}
 }
