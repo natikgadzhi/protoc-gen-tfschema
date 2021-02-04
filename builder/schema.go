@@ -59,8 +59,7 @@ func (b *schemaBuilder) setTypeAndElem() {
 
 	// NOTE: How to treat MapKey()?
 	if b.field.IsMap() {
-		b.schema.Type = "schema.TypeMap"
-		b.setElem(b.field.MapValue().Kind(), b.field.MapValue().Message())
+		b.setMap()
 	} else if b.field.IsList() {
 		b.schema.Type = "schema.TypeList"
 		b.setElem(b.field.Kind(), b.field.Message())
@@ -68,6 +67,38 @@ func (b *schemaBuilder) setTypeAndElem() {
 		b.setNestedResourceTypeAndElem()
 	} else {
 		b.schema.Type = b.getTypeFromKind(kind)
+	}
+}
+
+// Converts map of resources (are not supported by TerraForm) to list of resources with mock name field
+func (b *schemaBuilder) setMap() {
+	value := b.field.MapValue()
+
+	// Map with embedded ordinal type is OK
+	if value.Kind() != protoreflect.MessageKind {
+		b.schema.Type = "schema.TypeMap"
+		b.setElem(value.Kind(), value.Message())
+		return
+	}
+
+	// Embedded resource has a single field: we could omit it
+	resource := b.buildNestedResource(value.Message())
+	b.addMockNameField(resource)
+	b.schema.Type = "schema.TypeList"
+	b.schema.Elem = resource.Name
+}
+
+// Adds mock name field to resource
+func (b *schemaBuilder) addMockNameField(resource *Resource) {
+	if resource.Schema["name"] != nil {
+		logrus.Fatalf("Failed to convert map of resources to list of resources with name: name field exists")
+	}
+
+	resource.Schema["name"] = &Schema{
+		Name:     "name",
+		FullName: "mocks.Name",
+		Type:     "schema.TypeString",
+		Required: true,
 	}
 }
 

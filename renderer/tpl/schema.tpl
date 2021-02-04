@@ -49,6 +49,9 @@ map[string]*schema.Schema {
 {{- define "nestedSchema" -}}
 {
 	Type: {{ .Type }},
+	{{- if .Elem }}
+	{{- template "elem" .Elem }}
+	{{- end }}
 },
 {{- end -}}
 

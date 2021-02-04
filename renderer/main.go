@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	templateFilename = "file.gotpl"
+	templateFilename = "schema.tpl"
 	templatesDir     = "/renderer/tpl"
 )
 
