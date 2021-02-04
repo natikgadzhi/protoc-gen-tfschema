@@ -15,3 +15,14 @@ func BuildSchemaMapFromMessage(message *protoreflect.MessageDescriptor, resource
 		resource.Schema[schema.Name] = schema
 	}
 }
+
+// Keys returns schema keys
+func (m SchemaMap) Keys() []string {
+	keys := []string{}
+
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+
+	return keys
+}

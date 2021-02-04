@@ -10,7 +10,7 @@ import (
 type ResourceMap map[string]*Resource
 
 // BuildResourceMapFromFile returns SchemaMap parsed from the file
-func BuildResourceMapFromFile(file *protogen.File) *ResourceMap {
+func BuildResourceMapFromFile(file *protogen.File) ResourceMap {
 	m := make(ResourceMap)
 	messages := file.Desc.Messages()
 
@@ -23,7 +23,7 @@ func BuildResourceMapFromFile(file *protogen.File) *ResourceMap {
 		}
 	}
 
-	return &m
+	return m
 }
 
 // Checks if current message needs to be parsed & exported

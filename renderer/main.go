@@ -21,11 +21,11 @@ type viewData struct {
 	Version       string
 	ProtocVersion string
 	PackageName   string
-	Resources     *builder.ResourceMap
+	Resources     builder.ResourceMap
 }
 
 // Render renders file
-func Render(resources *builder.ResourceMap, version string) (*bytes.Buffer, error) {
+func Render(resources builder.ResourceMap, version string) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
 
 	_, filename, _, ok := runtime.Caller(1)

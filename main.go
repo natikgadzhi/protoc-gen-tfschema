@@ -8,6 +8,7 @@ import (
 	"github.com/gravitational/trace"
 	"github.com/nategadzhi/protoc-gen-tfschema/builder"
 	"github.com/nategadzhi/protoc-gen-tfschema/config"
+	"github.com/nategadzhi/protoc-gen-tfschema/reducer"
 	"github.com/nategadzhi/protoc-gen-tfschema/renderer"
 	log "github.com/sirupsen/logrus"
 
@@ -85,6 +86,7 @@ func generate() {
 
 		// Build resource tree
 		resources := builder.BuildResourceMapFromFile(file)
+		reducer.Reduce(resources)
 
 		// Render final template
 		result, err := renderer.Render(resources, Version)

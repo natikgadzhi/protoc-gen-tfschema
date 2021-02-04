@@ -9,18 +9,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-{{ range $index, $resource := .Resources }}
+{{ range $name, $resource := .Resources }}
 // Type full name: {{ .FullName }}
-func Schema{{ .Name }}() map[string]*schema.Schema {
+func Schema{{ $name }}() map[string]*schema.Schema {
 	return {{ template "schemaMap" .Schema -}}
 }
 {{ end }}
 
 {{- define "schemaMap" -}}
 map[string]*schema.Schema {
-{{- range . }}
+{{- range $name, $schema := . }}
 	// {{ .FullName }}
-	"{{ SnakeCase .Name }}": {{ template "schema" . }}
+	"{{ SnakeCase $name }}": {{ template "schema" . }}
 {{- end }}
 }
 {{- end -}}
