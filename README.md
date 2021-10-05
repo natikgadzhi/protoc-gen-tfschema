@@ -1,3 +1,7 @@
+## This repo is a spike, and is not maintained
+
+Check out [Teleport Plugins](https://github.com/gravitational/teleport-plugins) if you need Teleport's Terraform plugin.  
+
 # protoc-gen-tfschema
 
 protoc-gen-tfschema is a protoc plugin that generates Terraform-compatible
